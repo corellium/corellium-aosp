@@ -1,0 +1,7 @@
+menu "Corellium"
+
+source "drivers/corellium/d0map/Kconfig"
+
+source "drivers/corellium/sound/Kconfig"
+
+endmenu

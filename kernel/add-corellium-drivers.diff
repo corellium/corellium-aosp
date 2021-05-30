@@ -1,0 +1,19 @@
+diff a/drivers/Kconfig b/drivers/Kconfig
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -230,4 +230,6 @@ source "drivers/interconnect/Kconfig"
+ 
+ source "drivers/counter/Kconfig"
+ 
++source "drivers/corellium/Kconfig"
++
+ endmenu
+diff a/drivers/Makefile b/drivers/Makefile
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -186,3 +186,5 @@ obj-$(CONFIG_SIOX)		+= siox/
+ obj-$(CONFIG_GNSS)		+= gnss/
+ obj-$(CONFIG_INTERCONNECT)	+= interconnect/
+ obj-$(CONFIG_COUNTER)		+= counter/
++
++obj-y				+= corellium/

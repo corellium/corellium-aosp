@@ -1,0 +1,4 @@
+config D0MAP
+	tristate "D0map support"
+	help
+	  Support for mapping Dom0 memory into VM, needed for OpenGL FBT.

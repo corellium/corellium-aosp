@@ -1,0 +1,7 @@
+config GOLDFISH_AUDIO_ALSA
+	tristate "Goldfish Audio Device in ALSA"
+	depends on GOLDFISH
+	depends on SND_PCM
+	help
+	  Emulated audio channel for the Goldfish Android Virtual Device via ALSA
+
