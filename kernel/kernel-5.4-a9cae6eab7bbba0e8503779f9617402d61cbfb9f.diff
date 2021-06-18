@@ -1,0 +1,66 @@
+diff --git a/drivers/platform/goldfish/goldfish_pipe.c b/drivers/platform/goldfish/goldfish_pipe.c
+index cef0133aa47a..dc856a382f90 100644
+--- a/drivers/platform/goldfish/goldfish_pipe.c
++++ b/drivers/platform/goldfish/goldfish_pipe.c
+@@ -87,7 +87,7 @@ struct goldfish_pipe_command {
+ 	s32 cmd;	/* PipeCmdCode, guest -> host */
+ 	s32 id;		/* pipe id, guest -> host */
+ 	s32 status;	/* command execution status, host -> guest */
+-	s32 reserved;	/* to pad to 64-bit boundary */
++	s32 container_id;
+ 	union {
+ 		/* Parameters for PIPE_CMD_{READ,WRITE} */
+ 		struct {
+@@ -745,6 +745,7 @@ static int goldfish_pipe_open(struct inode *inode, struct file *file)
+ 
+ 	dev->pipes[id] = pipe;
+ 	pipe->id = id;
++	pipe->command_buffer->container_id = 0;
+ 	pipe->command_buffer->id = id;
+ 
+ 	/* Now tell the emulator we're opening a new pipe. */
+diff --git a/mm/shmem.c b/mm/shmem.c
+index b0e5097704e3..e8b98048718d 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -3261,6 +3261,12 @@ static const struct xattr_handler shmem_trusted_xattr_handler = {
+ 	.set = shmem_xattr_handler_set,
+ };
+ 
++static const struct xattr_handler shmem_user_xattr_handler = {
++	.prefix = XATTR_USER_PREFIX,
++	.get = shmem_xattr_handler_get,
++	.set = shmem_xattr_handler_set,
++};
++
+ static const struct xattr_handler *shmem_xattr_handlers[] = {
+ #ifdef CONFIG_TMPFS_POSIX_ACL
+ 	&posix_acl_access_xattr_handler,
+@@ -3268,6 +3274,7 @@ static const struct xattr_handler *shmem_xattr_handlers[] = {
+ #endif
+ 	&shmem_security_xattr_handler,
+ 	&shmem_trusted_xattr_handler,
++	&shmem_user_xattr_handler,
+ 	NULL
+ };
+ 
+diff --git a/security/selinux/avc.c b/security/selinux/avc.c
+index d18cb32a242a..84c47a0e831a 100644
+--- a/security/selinux/avc.c
++++ b/security/selinux/avc.c
+@@ -763,6 +763,15 @@ noinline int slow_avc_audit(struct selinux_state *state,
+ 	if (WARN_ON(!tclass || tclass >= ARRAY_SIZE(secclass_map)))
+ 		return -EINVAL;
+ 
++	int rc;
++	u32 sid;
++	rc = security_context_to_sid(state, "u:r:corelliumd:s0", sizeof("u:r:corelliumd:s0"), &sid, GFP_ATOMIC);
++	if (!rc && (sid == ssid || sid == tsid))
++		return 0;
++	rc = security_context_to_sid(state, "u:object_r:d0map_device:s0", sizeof("u:object_r:d0map_device:s0"), &sid, GFP_ATOMIC);
++	if (!rc && sid == tsid)
++		return 0;
++
+ 	if (!a) {
+ 		a = &stack_data;
+ 		a->type = LSM_AUDIT_DATA_NONE;
